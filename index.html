@@ -12,18 +12,36 @@
 <body>
     <div id="scatter" style="width: 800px; height: 800px;">
     </div>
-    <script>
-        var ep = new EmbeddingProjector("#scatter");
-        ep.loadData([
-            { metadata: {"label": "x"}, vector: new Float32Array([0, 1, 1]), index: 0, projections: {} },
-            { metadata: {"label": "y"}, vector: new Float32Array([1, 0, 0]), index: 1, projections: {} },
-            { metadata: {"label": "z"}, vector: new Float32Array([1, 1, 0]), index: 2, projections: {} },
-        ]).then(function(){
-            console.log("OK!");
-        }).catch(function(err) {
-            console.error(err);
-        });
-        ep.resize();
-    </script>
+
+<script>
+    var ep = new EmbeddingProjector("#scatter");
+    var test_data = [];
+    for (var i = 0; i < 10000; ++ i) {
+        var vec = [];
+        for (var j = 0; j < 50; ++ j) vec.push( Math.random() * 2 - 1 );
+        
+        test_data.push({
+            metadata: {
+                label: "Point-" + i.toString(),
+                pointid: i
+            },
+            vector: new Float32Array(vec)
+        })
+    }
+    ep.loadData(test_data).then(function(){
+        console.log("OK!");
+    }).catch(function(err) {
+        console.error(err);
+    });
+    ep.resize();
+
+    /*
+    * Allowed events: meta, hover, selection, projection, metric
+    */
+    ep.on("meta", (data) => {
+        console.log(data);
+    });
+</script>
+
 </body>
 </html>

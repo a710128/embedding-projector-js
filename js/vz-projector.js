@@ -209,6 +209,7 @@ EventHandler.prototype.registerDistanceMetricChangedListener = function(l) {
 }
 
 EventHandler.prototype.notifyDistanceMetricChanged = function(p) {
+    this.distFunc = p;
     this.lmetric.forEach(function(l){l(p);})
 }
 
@@ -253,21 +254,46 @@ EmbeddingProjector.prototype.on = function(event, l) {
 
 /*
 data = [
-    { metadata: {"label": "x"}, vector: new Float32Array([0, 1, 1]), index: 0, projections: {} },
-    { metadata: {"label": "y"}, vector: new Float32Array([1, 0, 0]), index: 1, projections: {} },
-    { metadata: {"label": "z"}, vector: new Float32Array([1, 1, 0]), index: 2, projections: {} },
+    { metadata: {"label": "x"}, vector: new Float32Array([0, 1, 1])},
+    { metadata: {"label": "y"}, vector: new Float32Array([1, 0, 0])},
+    { metadata: {"label": "z"}, vector: new Float32Array([1, 1, 0])},
 ];
 */
-EmbeddingProjector.prototype.loadData = function(data) {
+EmbeddingProjector.prototype.loadData = function(rawData) {
+    var data = [];
+    for (var i = 0; i < rawData.length; ++ i) {
+        var obj = rawData[i];
+        obj.index = i;
+        obj.projections = {};
+        data.push(obj);
+    }
     this.eventHandler.dataset = new wc.DataSet(data);
+    this.eventHandler.dataset.normalize();
     var that = this;
     return new Promise(function(resolve, reject) {
-        that.eventHandler.dataset.projectPCA().then(function() {
+        var worker = new Worker("/js/worker.js");
+        worker.onmessage = function(ev) {
+            that.eventHandler.dataset.fracVariancesExplained = ev.data.fracVariancesExplained;
+            for (var i = 0; i < ev.data.points.length; ++ i) {
+                that.eventHandler.dataset.points[i].projections = ev.data.points[i].projections;
+            }
+            that.eventHandler.dataset.projections = ev.data.projections;
+            worker.terminate();
+
             var proj = new wc.Projection('pca', ['pca-0', 'pca-1', 'pca-2'], 3, that.eventHandler.dataset);
             that.eventHandler.notifyProjectionChanged(proj);
             resolve();
-        }).catch(function(err) {
+        };
+        worker.onerror = function(err) {
             reject(err);
+        };
+        worker.onmessageerror = function(err) {
+            reject(err);
+        };
+
+        worker.postMessage({
+            points: that.eventHandler.dataset.points,
+            shuffledDataIndices: that.eventHandler.dataset.shuffledDataIndices
         });
     });
 }
@@ -278,6 +304,14 @@ EmbeddingProjector.prototype.resize = function() {
 
 EmbeddingProjector.prototype.render = function() {
     this.adp.render();
+}
+
+EmbeddingProjector.prototype.setMetric = function(algo) {
+    if (typeof algo === typeof "") {
+        if (algo == "cosine") algo = wc.vector.cosDist;
+        else if (algo == "euclidean") algo = wc.vector.dist;
+    }
+    this.eventHandler.notifyDistanceMetricChanged(algo);
 }
 
 window.EmbeddingProjector = EmbeddingProjector;
