@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+    <meta charset="utf-8">
+</head>
+<script src="/js/webgl.js" lang="text/javascript"></script>
+<script src="/js/d3.js" lang="text/javascript"></script>
+<script src="/js/numeric.js" lang="text/javascript"></script>
+<script src="/js/three.js" lang="text/javascript"></script>
+<script src="/js/vz-projector.js" lang="text/javascript"></script>
+<body>
+    <div id="scatter" style="width: 800px; height: 800px;">
+    </div>
+    <script>
+        var ep = new EmbeddingProjector("#scatter");
+        ep.loadData([
+            { metadata: {"label": "x"}, vector: new Float32Array([0, 1, 1]), index: 0, projections: {} },
+            { metadata: {"label": "y"}, vector: new Float32Array([1, 0, 0]), index: 1, projections: {} },
+            { metadata: {"label": "z"}, vector: new Float32Array([1, 1, 0]), index: 2, projections: {} },
+        ]).then(function(){
+            console.log("OK!");
+        }).catch(function(err) {
+            console.error(err);
+        });
+        ep.resize();
+    </script>
+</body>
+</html>
