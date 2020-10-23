@@ -314,5 +314,17 @@ EmbeddingProjector.prototype.setMetric = function(algo) {
     this.eventHandler.notifyDistanceMetricChanged(algo);
 }
 
+EmbeddingProjector.prototype.getMetric = function() {
+    return this.eventHandler.distFunc;
+}
+
+EmbeddingProjector.prototype.setNumNeighbors = function(num) {
+    this.eventHandler.numNN = num;
+}
+
+EmbeddingProjector.prototype.getNumNeighbors = function() {
+    return this.eventHandler.numNN;
+}
+
 window.EmbeddingProjector = EmbeddingProjector;
 })();
